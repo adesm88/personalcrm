@@ -13,11 +13,13 @@ async function main() {
     update: {
       password: '$2b$12$xbm9vzI4xYPJ3SaFvgu0yOw2akv3QsYVtGbWf/w9mBQvlCwKfjcga',
       name: 'Alexandre Desmarais',
+      role: 'OWNER',
     },
     create: {
       email: 'alexandredesmarais88@gmail.com',
       name: 'Alexandre Desmarais',
       password: '$2b$12$xbm9vzI4xYPJ3SaFvgu0yOw2akv3QsYVtGbWf/w9mBQvlCwKfjcga',
+      role: 'OWNER',
     },
   });
   console.log('User ready:', user.id, user.email);
