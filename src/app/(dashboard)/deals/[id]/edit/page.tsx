@@ -18,7 +18,7 @@ export default async function EditDealPage({
   if (!deal) notFound()
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div>
       <DealForm
         initialData={{
           id: deal.id,

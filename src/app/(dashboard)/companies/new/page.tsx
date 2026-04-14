@@ -9,7 +9,7 @@ export default async function NewCompanyPage() {
   } catch {}
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div>
       <CompanyForm companies={companies} />
     </div>
   )

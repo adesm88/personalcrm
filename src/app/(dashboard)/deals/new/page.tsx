@@ -19,7 +19,7 @@ export default async function NewDealPage() {
   } catch {}
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div>
       <DealForm companies={companies} contacts={contacts} />
     </div>
   )

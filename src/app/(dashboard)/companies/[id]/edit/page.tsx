@@ -15,7 +15,7 @@ export default async function EditCompanyPage({
   if (!company) notFound()
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div>
       <CompanyForm
         initialData={{
           id: company.id,
