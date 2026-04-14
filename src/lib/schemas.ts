@@ -28,6 +28,7 @@ export const contactSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
   companyId: z.string().optional().nullable(),
+  newCompanyName: z.string().optional().nullable(), // When creating a new company inline
   email: z.string().email().optional().or(z.literal("")).nullable(),
   phone: z.string().optional().nullable(),
   title: z.string().optional().nullable(),

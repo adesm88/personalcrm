@@ -3,7 +3,6 @@ import { notFound } from "next/navigation"
 import { getContact, deleteContact } from "@/actions/contacts"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { StatusBadge } from "@/components/status-badge"
 import { CONTACT_ROLE_LABELS, DEAL_STAGE_LABELS } from "@/lib/schemas"
@@ -12,7 +11,7 @@ import { ReminderList } from "@/components/reminder-list"
 import { ActivityForm } from "@/components/activity-form"
 import { ReminderForm } from "@/components/reminder-form"
 import { DeleteButton } from "@/components/delete-button"
-import { ArrowLeft, Edit, Mail, Phone, Linkedin, ExternalLink } from "lucide-react"
+import { ArrowLeft, Edit, Mail, Phone, Linkedin, ExternalLink, Handshake, Activity, Bell } from "lucide-react"
 
 export default async function ContactDetailPage({
   params,
@@ -24,7 +23,7 @@ export default async function ContactDetailPage({
   if (!contact) notFound()
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" asChild>
@@ -57,67 +56,114 @@ export default async function ContactDetailPage({
         </div>
       </div>
 
-      {/* Contact Info */}
-      <div className="flex flex-wrap gap-3">
-        {contact.email && (
-          <a href={`mailto:${contact.email}`} className="flex items-center gap-1.5 text-sm text-primary hover:underline border rounded-lg px-3 py-1.5">
-            <Mail className="h-3.5 w-3.5" /> {contact.email}
-          </a>
-        )}
-        {contact.phone && (
-          <a href={`tel:${contact.phone}`} className="flex items-center gap-1.5 text-sm text-primary hover:underline border rounded-lg px-3 py-1.5">
-            <Phone className="h-3.5 w-3.5" /> {contact.phone}
-          </a>
-        )}
-        {contact.linkedIn && (
-          <a href={contact.linkedIn} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-sm text-primary hover:underline border rounded-lg px-3 py-1.5">
-            <Linkedin className="h-3.5 w-3.5" /> LinkedIn <ExternalLink className="h-3 w-3" />
-          </a>
-        )}
-      </div>
+      {/* ── Info ── */}
+      <section>
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Info</h2>
+        <Card>
+          <CardContent className="p-5">
+            <div className="grid gap-x-8 gap-y-4 sm:grid-cols-2">
+              <div>
+                <p className="text-xs text-muted-foreground mb-0.5">Company</p>
+                {contact.company ? (
+                  <Link href={`/companies/${contact.company.id}`} className="text-sm text-primary hover:underline font-medium">
+                    {contact.company.name}
+                  </Link>
+                ) : (
+                  <p className="text-sm text-muted-foreground">—</p>
+                )}
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground mb-0.5">Role</p>
+                <p className="text-sm"><StatusBadge status={contact.role} label={CONTACT_ROLE_LABELS[contact.role]} /></p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground mb-0.5">Email</p>
+                {contact.email ? (
+                  <a href={`mailto:${contact.email}`} className="text-sm text-primary hover:underline flex items-center gap-1">
+                    <Mail className="h-3.5 w-3.5" /> {contact.email}
+                  </a>
+                ) : (
+                  <p className="text-sm text-muted-foreground">—</p>
+                )}
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground mb-0.5">Phone</p>
+                {contact.phone ? (
+                  <a href={`tel:${contact.phone}`} className="text-sm text-primary hover:underline flex items-center gap-1">
+                    <Phone className="h-3.5 w-3.5" /> {contact.phone}
+                  </a>
+                ) : (
+                  <p className="text-sm text-muted-foreground">—</p>
+                )}
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground mb-0.5">Job Title</p>
+                <p className="text-sm">{contact.title || <span className="text-muted-foreground">—</span>}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground mb-0.5">LinkedIn</p>
+                {contact.linkedIn ? (
+                  <a href={contact.linkedIn} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline flex items-center gap-1">
+                    <Linkedin className="h-3.5 w-3.5" /> Profile <ExternalLink className="h-3 w-3" />
+                  </a>
+                ) : (
+                  <p className="text-sm text-muted-foreground">—</p>
+                )}
+              </div>
+            </div>
+            {contact.notes && (
+              <div className="mt-5 pt-4 border-t">
+                <p className="text-xs text-muted-foreground mb-1">Notes</p>
+                <p className="text-sm whitespace-pre-wrap">{contact.notes}</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </section>
 
-      {/* Tabs */}
-      <Tabs defaultValue="deals">
-        <TabsList>
-          <TabsTrigger value="deals">Deals ({contact.deals.length})</TabsTrigger>
-          <TabsTrigger value="activities">Activities ({contact.activities.length})</TabsTrigger>
-          <TabsTrigger value="reminders">Reminders ({contact.reminders.length})</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="deals" className="mt-4">
-          <Card>
-            <CardContent className="p-0">
-              {contact.deals.length === 0 ? (
-                <div className="py-8 text-center text-sm text-muted-foreground">Not linked to any deals</div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Deal</TableHead>
-                      <TableHead>Stage</TableHead>
+      {/* ── Deals ── */}
+      <section>
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
+          <Handshake className="h-4 w-4" /> Deals ({contact.deals.length})
+        </h2>
+        <Card>
+          <CardContent className="p-0">
+            {contact.deals.length === 0 ? (
+              <div className="py-8 text-center text-sm text-muted-foreground">Not linked to any deals</div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Deal</TableHead>
+                    <TableHead>Stage</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {contact.deals.map((dc) => (
+                    <TableRow key={dc.deal.id}>
+                      <TableCell>
+                        <Link href={`/deals/${dc.deal.id}`} className="font-medium text-primary hover:underline">
+                          {dc.deal.name}
+                        </Link>
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge status={dc.deal.stage} label={DEAL_STAGE_LABELS[dc.deal.stage]} />
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {contact.deals.map((dc) => (
-                      <TableRow key={dc.deal.id}>
-                        <TableCell>
-                          <Link href={`/deals/${dc.deal.id}`} className="font-medium text-primary hover:underline">
-                            {dc.deal.name}
-                          </Link>
-                        </TableCell>
-                        <TableCell>
-                          <StatusBadge status={dc.deal.stage} label={DEAL_STAGE_LABELS[dc.deal.stage]} />
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+      </section>
 
-        <TabsContent value="activities" className="mt-4 space-y-4">
+      {/* ── Activities ── */}
+      <section>
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
+          <Activity className="h-4 w-4" /> Activities ({contact.activities.length})
+        </h2>
+        <div className="space-y-4">
           <Card>
             <CardHeader><CardTitle className="text-sm">Log Activity</CardTitle></CardHeader>
             <CardContent>
@@ -129,9 +175,15 @@ export default async function ContactDetailPage({
               <EntityActivityTimeline activities={contact.activities} showLinkedEntity={false} />
             </CardContent>
           </Card>
-        </TabsContent>
+        </div>
+      </section>
 
-        <TabsContent value="reminders" className="mt-4 space-y-4">
+      {/* ── Reminders ── */}
+      <section>
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
+          <Bell className="h-4 w-4" /> Reminders ({contact.reminders.length})
+        </h2>
+        <div className="space-y-4">
           <Card>
             <CardHeader><CardTitle className="text-sm">Add Reminder</CardTitle></CardHeader>
             <CardContent>
@@ -143,17 +195,8 @@ export default async function ContactDetailPage({
               <ReminderList reminders={contact.reminders} showLinkedEntity={false} />
             </CardContent>
           </Card>
-        </TabsContent>
-      </Tabs>
-
-      {contact.notes && (
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground mb-1">Notes</p>
-            <p className="text-sm whitespace-pre-wrap">{contact.notes}</p>
-          </CardContent>
-        </Card>
-      )}
+        </div>
+      </section>
     </div>
   )
 }

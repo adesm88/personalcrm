@@ -44,11 +44,20 @@ export async function getContact(id: string) {
 export async function createContact(data: unknown) {
   const validated = contactSchema.parse(data)
 
+  // If a new company name was provided, create the company first
+  let companyId = validated.companyId || null
+  if (!companyId && validated.newCompanyName?.trim()) {
+    const newCompany = await prisma.company.create({
+      data: { name: validated.newCompanyName.trim() },
+    })
+    companyId = newCompany.id
+  }
+
   const result = await prisma.contact.create({
     data: {
       firstName: validated.firstName,
       lastName: validated.lastName,
-      companyId: validated.companyId || null,
+      companyId,
       email: validated.email || null,
       phone: validated.phone,
       title: validated.title,
@@ -59,6 +68,7 @@ export async function createContact(data: unknown) {
   })
 
   revalidatePath("/contacts")
+  revalidatePath("/companies")
   revalidatePath("/")
   return { success: true, id: result.id }
 }

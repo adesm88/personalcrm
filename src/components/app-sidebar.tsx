@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { signOut, useSession } from "next-auth/react"
 import {
   LayoutDashboard,
   Building2,
@@ -10,6 +11,8 @@ import {
   Bell,
   Activity,
   ChevronRight,
+  LogOut,
+  Settings,
 } from "lucide-react"
 import {
   Sidebar,
@@ -71,6 +74,7 @@ interface AppSidebarProps {
 
 export function AppSidebar({ overdueCount = 0 }: AppSidebarProps) {
   const pathname = usePathname()
+  const { data: session } = useSession()
 
   return (
     <Sidebar>
@@ -195,13 +199,56 @@ export function AppSidebar({ overdueCount = 0 }: AppSidebarProps) {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {/* Settings */}
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname.startsWith("/settings")}
+                  className={cn(
+                    "transition-all duration-200",
+                    pathname.startsWith("/settings")
+                      ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                      : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+                  )}
+                >
+                  <Link href="/settings">
+                    <Settings className="h-4 w-4" />
+                    <span>Settings</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-sidebar-border p-4">
-        <div className="text-xs text-sidebar-foreground/40 text-center">
-          DealFlow CRM v0.1
+      <SidebarFooter className="border-t border-sidebar-border p-3">
+        <div className="flex items-center gap-3 px-2 py-1.5">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-sidebar-accent text-sidebar-accent-foreground text-xs font-semibold shrink-0">
+            {session?.user?.name?.[0]?.toUpperCase() || session?.user?.email?.[0]?.toUpperCase() || "?"}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-medium text-sidebar-foreground truncate">
+              {session?.user?.name || "User"}
+            </p>
+            <p className="text-[10px] text-sidebar-foreground/50 truncate">
+              {session?.user?.email || ""}
+            </p>
+          </div>
+          <button
+            onClick={() => signOut({ callbackUrl: "/login" })}
+            className="flex h-8 w-8 items-center justify-center rounded-md text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors cursor-pointer"
+            title="Sign out"
+          >
+            <LogOut className="h-4 w-4" />
+          </button>
         </div>
       </SidebarFooter>
     </Sidebar>
   )
 }
+

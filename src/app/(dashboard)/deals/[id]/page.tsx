@@ -3,7 +3,6 @@ import { notFound } from "next/navigation"
 import { getDeal, deleteDeal } from "@/actions/deals"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { StatusBadge } from "@/components/status-badge"
 import { DEAL_STAGE_LABELS, DEAL_PRIORITY_LABELS, CONTACT_ROLE_LABELS } from "@/lib/schemas"
@@ -13,7 +12,7 @@ import { ReminderList } from "@/components/reminder-list"
 import { ActivityForm } from "@/components/activity-form"
 import { ReminderForm } from "@/components/reminder-form"
 import { DeleteButton } from "@/components/delete-button"
-import { ArrowLeft, Edit, Building2, Users, DollarSign, Calendar, Target } from "lucide-react"
+import { ArrowLeft, Edit, Building2, Users, DollarSign, Calendar, Target, Activity, Bell } from "lucide-react"
 
 export default async function DealDetailPage({
   params,
@@ -25,7 +24,7 @@ export default async function DealDetailPage({
   if (!deal) notFound()
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" asChild>
@@ -54,103 +53,116 @@ export default async function DealDetailPage({
         </div>
       </div>
 
-      {/* Deal Info Cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* ── Info ── */}
+      <section>
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Info</h2>
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-1">
-              <DollarSign className="h-3.5 w-3.5 text-muted-foreground" />
-              <p className="text-xs text-muted-foreground">Asking Price</p>
+          <CardContent className="p-5">
+            <div className="grid gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div>
+                <p className="text-xs text-muted-foreground mb-0.5">Stage</p>
+                <StatusBadge status={deal.stage} label={DEAL_STAGE_LABELS[deal.stage]} />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground mb-0.5">Priority</p>
+                <StatusBadge status={deal.priority} label={DEAL_PRIORITY_LABELS[deal.priority]} />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground mb-0.5">Company</p>
+                {deal.company ? (
+                  <Link href={`/companies/${deal.company.id}`} className="text-sm text-primary hover:underline font-medium flex items-center gap-1">
+                    <Building2 className="h-3.5 w-3.5" /> {deal.company.name}
+                  </Link>
+                ) : (
+                  <p className="text-sm text-muted-foreground">—</p>
+                )}
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground mb-0.5">Expected Close</p>
+                <p className="text-sm font-medium flex items-center gap-1">
+                  <Calendar className="h-3.5 w-3.5 text-muted-foreground" /> {formatDate(deal.expectedCloseDate)}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground mb-0.5">Asking Price</p>
+                <p className="text-sm font-semibold flex items-center gap-1">
+                  <DollarSign className="h-3.5 w-3.5 text-muted-foreground" /> {formatCurrency(deal.askingPrice, deal.currency)}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground mb-0.5">Revenue</p>
+                <p className="text-sm font-semibold flex items-center gap-1">
+                  <Target className="h-3.5 w-3.5 text-muted-foreground" /> {formatCurrency(deal.revenue, deal.currency)}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground mb-0.5">EBITDA</p>
+                <p className="text-sm font-semibold flex items-center gap-1">
+                  <Target className="h-3.5 w-3.5 text-muted-foreground" /> {formatCurrency(deal.ebitda, deal.currency)}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground mb-0.5">Source</p>
+                <p className="text-sm">{deal.source || <span className="text-muted-foreground">—</span>}</p>
+              </div>
             </div>
-            <p className="text-lg font-semibold">{formatCurrency(deal.askingPrice, deal.currency)}</p>
+            {deal.notes && (
+              <div className="mt-5 pt-4 border-t">
+                <p className="text-xs text-muted-foreground mb-1">Notes</p>
+                <p className="text-sm whitespace-pre-wrap">{deal.notes}</p>
+              </div>
+            )}
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-1">
-              <Target className="h-3.5 w-3.5 text-muted-foreground" />
-              <p className="text-xs text-muted-foreground">Revenue</p>
-            </div>
-            <p className="text-lg font-semibold">{formatCurrency(deal.revenue, deal.currency)}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-1">
-              <Target className="h-3.5 w-3.5 text-muted-foreground" />
-              <p className="text-xs text-muted-foreground">EBITDA</p>
-            </div>
-            <p className="text-lg font-semibold">{formatCurrency(deal.ebitda, deal.currency)}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-1">
-              <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
-              <p className="text-xs text-muted-foreground">Expected Close</p>
-            </div>
-            <p className="text-lg font-semibold">{formatDate(deal.expectedCloseDate)}</p>
-          </CardContent>
-        </Card>
-      </div>
+      </section>
 
-      {deal.source && (
+      {/* ── Contacts ── */}
+      <section>
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
+          <Users className="h-4 w-4" /> Contacts ({deal.contacts.length})
+        </h2>
         <Card>
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground mb-0.5">Source</p>
-            <p className="text-sm">{deal.source}</p>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Tabs */}
-      <Tabs defaultValue="contacts">
-        <TabsList>
-          <TabsTrigger value="contacts" className="gap-1.5">
-            <Users className="h-3.5 w-3.5" /> Contacts ({deal.contacts.length})
-          </TabsTrigger>
-          <TabsTrigger value="activities">Activities ({deal.activities.length})</TabsTrigger>
-          <TabsTrigger value="reminders">Reminders ({deal.reminders.length})</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="contacts" className="mt-4">
-          <Card>
-            <CardContent className="p-0">
-              {deal.contacts.length === 0 ? (
-                <div className="py-8 text-center text-sm text-muted-foreground">No contacts linked to this deal</div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Phone</TableHead>
+          <CardContent className="p-0">
+            {deal.contacts.length === 0 ? (
+              <div className="py-8 text-center text-sm text-muted-foreground">No contacts linked to this deal</div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Phone</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {deal.contacts.map((dc) => (
+                    <TableRow key={dc.contact.id}>
+                      <TableCell>
+                        <Link href={`/contacts/${dc.contact.id}`} className="font-medium text-primary hover:underline">
+                          {dc.contact.firstName} {dc.contact.lastName}
+                        </Link>
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge status={dc.contact.role} label={CONTACT_ROLE_LABELS[dc.contact.role]} />
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{dc.contact.email || "—"}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{dc.contact.phone || "—"}</TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {deal.contacts.map((dc) => (
-                      <TableRow key={dc.contact.id}>
-                        <TableCell>
-                          <Link href={`/contacts/${dc.contact.id}`} className="font-medium text-primary hover:underline">
-                            {dc.contact.firstName} {dc.contact.lastName}
-                          </Link>
-                        </TableCell>
-                        <TableCell>
-                          <StatusBadge status={dc.contact.role} label={CONTACT_ROLE_LABELS[dc.contact.role]} />
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">{dc.contact.email || "—"}</TableCell>
-                        <TableCell className="text-sm text-muted-foreground">{dc.contact.phone || "—"}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+      </section>
 
-        <TabsContent value="activities" className="mt-4 space-y-4">
+      {/* ── Activities ── */}
+      <section>
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
+          <Activity className="h-4 w-4" /> Activities ({deal.activities.length})
+        </h2>
+        <div className="space-y-4">
           <Card>
             <CardHeader><CardTitle className="text-sm">Log Activity</CardTitle></CardHeader>
             <CardContent>
@@ -162,9 +174,15 @@ export default async function DealDetailPage({
               <EntityActivityTimeline activities={deal.activities} showLinkedEntity={false} />
             </CardContent>
           </Card>
-        </TabsContent>
+        </div>
+      </section>
 
-        <TabsContent value="reminders" className="mt-4 space-y-4">
+      {/* ── Reminders ── */}
+      <section>
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
+          <Bell className="h-4 w-4" /> Reminders ({deal.reminders.length})
+        </h2>
+        <div className="space-y-4">
           <Card>
             <CardHeader><CardTitle className="text-sm">Add Reminder / Next Step</CardTitle></CardHeader>
             <CardContent>
@@ -176,17 +194,8 @@ export default async function DealDetailPage({
               <ReminderList reminders={deal.reminders} showLinkedEntity={false} />
             </CardContent>
           </Card>
-        </TabsContent>
-      </Tabs>
-
-      {deal.notes && (
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground mb-1">Notes</p>
-            <p className="text-sm whitespace-pre-wrap">{deal.notes}</p>
-          </CardContent>
-        </Card>
-      )}
+        </div>
+      </section>
     </div>
   )
 }

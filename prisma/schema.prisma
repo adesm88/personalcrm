@@ -13,6 +13,13 @@ datasource db {
 
 // --- Auth Models (NextAuth.js) ---
 
+enum UserRole {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
 model Account {
   id                String  @id @default(cuid())
   userId            String
@@ -47,6 +54,7 @@ model User {
   emailVerified DateTime?
   image         String?
   password      String?   // For credentials auth
+  role          UserRole  @default(MEMBER)
   accounts      Account[]
   sessions      Session[]
 
@@ -60,6 +68,85 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expires   DateTime
+  createdAt DateTime @default(now())
+
+  @@unique([email, token])
+}
+
+// --- Module Configuration ---
+
+model CrmModule {
+  id        String  @id @default(cuid())
+  slug      String  @unique
+  name      String
+  icon      String?
+  enabled   Boolean @default(true)
+  sortOrder Int     @default(0)
+
+  fields ModuleField[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("Module")
+}
+
+enum FieldType {
+  TEXT
+  TEXTAREA
+  NUMBER
+  DECIMAL
+  DATE
+  SELECT
+  MULTI_SELECT
+  BOOLEAN
+  URL
+  EMAIL
+  PHONE
+}
+
+model ModuleField {
+  id          String    @id @default(cuid())
+  moduleId    String
+  name        String
+  label       String
+  fieldType   FieldType @default(TEXT)
+  isSystem    Boolean   @default(false)
+  isRequired  Boolean   @default(false)
+  isVisible   Boolean   @default(true)
+  sortOrder   Int       @default(0)
+  options     String?   @db.Text
+  placeholder String?
+  section     String?
+
+  module CrmModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  values CustomFieldValue[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([moduleId, name])
+}
+
+model CustomFieldValue {
+  id       String  @id @default(cuid())
+  fieldId  String
+  entityId String
+  value    String? @db.Text
+
+  field ModuleField @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([fieldId, entityId])
 }
 
 // --- Domain Models ---

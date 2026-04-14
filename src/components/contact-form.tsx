@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { contactSchema, type ContactFormData, CONTACT_ROLE_LABELS } from "@/lib/schemas"
@@ -12,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
-import { Loader2 } from "lucide-react"
+import { Loader2, Plus, X } from "lucide-react"
 
 interface ContactFormProps {
   initialData?: ContactFormData & { id?: string }
@@ -22,6 +23,7 @@ interface ContactFormProps {
 export function ContactForm({ initialData, companies }: ContactFormProps) {
   const router = useRouter()
   const isEditing = !!initialData?.id
+  const [creatingNewCompany, setCreatingNewCompany] = useState(false)
 
   const {
     register,
@@ -36,6 +38,7 @@ export function ContactForm({ initialData, companies }: ContactFormProps) {
       firstName: "",
       lastName: "",
       companyId: null,
+      newCompanyName: "",
       email: "",
       phone: "",
       title: "",
@@ -61,6 +64,17 @@ export function ContactForm({ initialData, companies }: ContactFormProps) {
     }
   }
 
+  function handleCreateNewCompany() {
+    setCreatingNewCompany(true)
+    setValue("companyId", null)
+    setValue("newCompanyName", "")
+  }
+
+  function handleCancelNewCompany() {
+    setCreatingNewCompany(false)
+    setValue("newCompanyName", "")
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -84,20 +98,50 @@ export function ContactForm({ initialData, companies }: ContactFormProps) {
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="companyId">Company</Label>
-              <Select
-                value={watch("companyId") || "none"}
-                onValueChange={(v) => setValue("companyId", v === "none" ? null : v)}
-              >
-                <SelectTrigger id="companyId">
-                  <SelectValue placeholder="Select company..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">None</SelectItem>
-                  {companies.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {creatingNewCompany ? (
+                <div className="flex gap-2">
+                  <Input
+                    {...register("newCompanyName")}
+                    placeholder="New company name"
+                    autoFocus
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="shrink-0 h-9 w-9 cursor-pointer"
+                    onClick={handleCancelNewCompany}
+                    title="Cancel"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-1.5">
+                  <Select
+                    value={watch("companyId") || "none"}
+                    onValueChange={(v) => setValue("companyId", v === "none" ? null : v)}
+                  >
+                    <SelectTrigger id="companyId">
+                      <SelectValue placeholder="Select company..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">None</SelectItem>
+                      {companies.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <button
+                    type="button"
+                    onClick={handleCreateNewCompany}
+                    className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 font-medium transition-colors cursor-pointer"
+                  >
+                    <Plus className="h-3 w-3" />
+                    Create new company
+                  </button>
+                </div>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="role">Role</Label>
@@ -159,3 +203,4 @@ export function ContactForm({ initialData, companies }: ContactFormProps) {
     </Card>
   )
 }
+
