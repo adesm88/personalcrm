@@ -4,6 +4,17 @@ import { prisma } from "@/lib/prisma"
 import { reminderSchema } from "@/lib/schemas"
 import { revalidatePath } from "next/cache"
 
+export async function getReminder(id: string) {
+  return await prisma.reminder.findUnique({
+    where: { id },
+    include: {
+      deal: { select: { id: true, name: true } },
+      contact: { select: { id: true, firstName: true, lastName: true } },
+      company: { select: { id: true, name: true } },
+    },
+  })
+}
+
 export async function getReminders(includeCompleted = false) {
   return await prisma.reminder.findMany({
     where: includeCompleted

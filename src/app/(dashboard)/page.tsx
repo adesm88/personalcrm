@@ -4,6 +4,7 @@ import { StatCard, StatsGrid } from "@/components/stats-cards"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { StatusBadge } from "@/components/status-badge"
+import { ReminderList } from "@/components/reminder-list"
 import { DEAL_STAGE_LABELS, DEAL_PRIORITY_LABELS } from "@/lib/schemas"
 import { formatDate, formatCurrency } from "@/lib/utils"
 import { prisma } from "@/lib/prisma"
@@ -185,37 +186,7 @@ export default async function DashboardPage() {
                 <p className="text-sm">No upcoming reminders</p>
               </div>
             ) : (
-              <div className="space-y-2">
-                {data.upcomingReminders.map((reminder) => {
-                  const isOverdue = new Date(reminder.dueDate) < new Date()
-                  return (
-                    <div
-                      key={reminder.id}
-                      className={`rounded-lg border p-3 ${isOverdue ? "border-red-200 bg-red-50/50" : ""}`}
-                    >
-                      <div className="flex items-center justify-between mb-1">
-                        <p className="text-sm font-medium truncate">{reminder.title}</p>
-                        <StatusBadge status={reminder.priority} />
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className={`text-xs ${isOverdue ? "text-red-600 font-medium" : "text-muted-foreground"}`}>
-                          {formatDate(reminder.dueDate)}
-                        </span>
-                        {reminder.deal && (
-                          <Link href={`/deals/${reminder.deal.id}`} className="text-xs text-primary hover:underline">
-                            {reminder.deal.name}
-                          </Link>
-                        )}
-                        {reminder.contact && (
-                          <Link href={`/contacts/${reminder.contact.id}`} className="text-xs text-primary hover:underline">
-                            {reminder.contact.firstName} {reminder.contact.lastName}
-                          </Link>
-                        )}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
+              <ReminderList reminders={data.upcomingReminders} />
             )}
           </CardContent>
         </Card>
