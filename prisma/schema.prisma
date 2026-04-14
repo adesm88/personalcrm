@@ -1,0 +1,264 @@
+// Personal CRM — Prisma Schema
+// Tracks contacts, companies, deals, activities, and reminders
+// for acquisition/investment workflows
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// --- Auth Models (NextAuth.js) ---
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?   // For credentials auth
+  accounts      Account[]
+  sessions      Session[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// --- Domain Models ---
+
+// Parent Company — holding groups that own multiple companies
+model ParentCompany {
+  id        String  @id @default(cuid())
+  name      String
+  industry  String?
+  website   String?
+  notes     String? @db.Text
+
+  companies Company[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Company — acquisition targets, portfolio companies, or other entities
+enum CompanyStatus {
+  PROSPECT
+  UNDER_REVIEW
+  IN_DUE_DILIGENCE
+  OFFER_MADE
+  CLOSED
+  PASSED
+  PORTFOLIO
+}
+
+model Company {
+  id              String        @id @default(cuid())
+  parentCompanyId String?
+  name            String
+  industry        String?
+  website         String?
+  location        String?
+  revenue         String?       // Stored as string for flexibility (e.g. "$5M-$10M")
+  employeeCount   String?
+  description     String?       @db.Text
+  notes           String?       @db.Text
+  status          CompanyStatus @default(PROSPECT)
+
+  parentCompany ParentCompany? @relation(fields: [parentCompanyId], references: [id], onDelete: SetNull)
+  contacts      Contact[]
+  deals         Deal[]
+  activities    Activity[]
+  reminders     Reminder[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Contact — people linked to companies
+enum ContactRole {
+  OWNER
+  CEO
+  CFO
+  BROKER
+  ADVISOR
+  EMPLOYEE
+  BOARD_MEMBER
+  OTHER
+}
+
+model Contact {
+  id        String      @id @default(cuid())
+  companyId String?
+  firstName String
+  lastName  String
+  email     String?
+  phone     String?
+  title     String?     // Job title
+  linkedIn  String?
+  role      ContactRole @default(OTHER)
+  notes     String?     @db.Text
+
+  company    Company?      @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  deals      DealContact[]
+  activities Activity[]
+  reminders  Reminder[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Deal — acquisition opportunities
+enum DealStage {
+  LEAD
+  INITIAL_CONTACT
+  NDA_SIGNED
+  DUE_DILIGENCE
+  LOI
+  NEGOTIATION
+  CLOSED_WON
+  CLOSED_LOST
+}
+
+enum DealPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+model Deal {
+  id                String       @id @default(cuid())
+  companyId         String?
+  name              String
+  stage             DealStage    @default(LEAD)
+  askingPrice       Decimal?     @db.Decimal(20, 2)
+  revenue           Decimal?     @db.Decimal(20, 2)
+  ebitda            Decimal?     @db.Decimal(20, 2)
+  currency          String       @default("USD")
+  expectedCloseDate DateTime?
+  source            String?      // How we found this deal
+  notes             String?      @db.Text
+  priority          DealPriority @default(MEDIUM)
+
+  company    Company?      @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  contacts   DealContact[]
+  activities Activity[]
+  reminders  Reminder[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Junction table for Deal <-> Contact many-to-many
+model DealContact {
+  id        String @id @default(cuid())
+  dealId    String
+  contactId String
+
+  deal    Deal    @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  contact Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([dealId, contactId])
+}
+
+// Activity — notes, calls, meetings, etc. (polymorphic via optional FKs)
+enum ActivityType {
+  NOTE
+  CALL
+  EMAIL
+  MEETING
+  SITE_VISIT
+  OTHER
+}
+
+model Activity {
+  id          String       @id @default(cuid())
+  dealId      String?
+  contactId   String?
+  companyId   String?
+  type        ActivityType @default(NOTE)
+  subject     String
+  description String?      @db.Text
+  date        DateTime     @default(now())
+
+  deal    Deal?    @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  contact Contact? @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  company Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Reminder / Next Step — tasks tied to entities
+enum ReminderPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum ReminderStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+model Reminder {
+  id          String           @id @default(cuid())
+  dealId      String?
+  contactId   String?
+  companyId   String?
+  title       String
+  description String?          @db.Text
+  dueDate     DateTime
+  priority    ReminderPriority @default(MEDIUM)
+  status      ReminderStatus   @default(PENDING)
+
+  deal    Deal?    @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  contact Contact? @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  company Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
