@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { formatDate } from "@/lib/utils"
+import { formatDateTime } from "@/lib/utils"
 import { StatusBadge } from "@/components/status-badge"
 import { REMINDER_PRIORITY_LABELS, REMINDER_STATUS_LABELS } from "@/lib/schemas"
 import { ReminderEditDialog } from "@/components/reminder-edit-dialog"
@@ -114,7 +114,7 @@ export function ReminderList({ reminders, showLinkedEntity = true }: ReminderLis
                     }`}
                   >
                     {overdue && <AlertTriangle className="h-3 w-3" />}
-                    {formatDate(reminder.dueDate)}
+                    {formatDateTime(reminder.dueDate)}
                   </span>
                   <StatusBadge
                     status={reminder.status}
