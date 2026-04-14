@@ -53,6 +53,7 @@ export default async function CompaniesPage() {
                   <TableHead>Location</TableHead>
                   <TableHead className="text-center">Contacts</TableHead>
                   <TableHead className="text-center">Deals</TableHead>
+                  <TableHead className="text-center">Subs</TableHead>
                   <TableHead className="w-10"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -64,10 +65,10 @@ export default async function CompaniesPage() {
                         {company.name}
                       </Link>
                     </TableCell>
-                    <TableCell className="text-muted-foreground text-sm">
-                      {company.parentCompany ? (
-                        <Link href={`/parent-companies/${company.parentCompany.id}`} className="hover:underline">
-                          {company.parentCompany.name}
+                    <TableCell className="text-sm">
+                      {company.parent ? (
+                        <Link href={`/companies/${company.parent.id}`} className="text-muted-foreground hover:underline">
+                          {company.parent.name}
                         </Link>
                       ) : "—"}
                     </TableCell>
@@ -78,6 +79,13 @@ export default async function CompaniesPage() {
                     <TableCell className="text-muted-foreground text-sm">{company.location || "—"}</TableCell>
                     <TableCell className="text-center">{company._count.contacts}</TableCell>
                     <TableCell className="text-center">{company._count.deals}</TableCell>
+                    <TableCell className="text-center">
+                      {company._count.children > 0 ? (
+                        <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-muted px-1.5 text-xs font-medium">
+                          {company._count.children}
+                        </span>
+                      ) : "—"}
+                    </TableCell>
                     <TableCell>
                       <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100" asChild>
                         <Link href={`/companies/${company.id}`}>

@@ -64,21 +64,7 @@ model VerificationToken {
 
 // --- Domain Models ---
 
-// Parent Company — holding groups that own multiple companies
-model ParentCompany {
-  id        String  @id @default(cuid())
-  name      String
-  industry  String?
-  website   String?
-  notes     String? @db.Text
-
-  companies Company[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-// Company — acquisition targets, portfolio companies, or other entities
+// Company — acquisition targets, portfolio companies, holding groups, etc.
 enum CompanyStatus {
   PROSPECT
   UNDER_REVIEW
@@ -90,23 +76,24 @@ enum CompanyStatus {
 }
 
 model Company {
-  id              String        @id @default(cuid())
-  parentCompanyId String?
-  name            String
-  industry        String?
-  website         String?
-  location        String?
-  revenue         String?       // Stored as string for flexibility (e.g. "$5M-$10M")
-  employeeCount   String?
-  description     String?       @db.Text
-  notes           String?       @db.Text
-  status          CompanyStatus @default(PROSPECT)
+  id            String        @id @default(cuid())
+  parentId      String?
+  name          String
+  industry      String?
+  website       String?
+  location      String?
+  revenue       String?       // Stored as string for flexibility (e.g. "$5M-$10M")
+  employeeCount String?
+  description   String?       @db.Text
+  notes         String?       @db.Text
+  status        CompanyStatus @default(PROSPECT)
 
-  parentCompany ParentCompany? @relation(fields: [parentCompanyId], references: [id], onDelete: SetNull)
-  contacts      Contact[]
-  deals         Deal[]
-  activities    Activity[]
-  reminders     Reminder[]
+  parent     Company?   @relation("CompanyParent", fields: [parentId], references: [id], onDelete: SetNull)
+  children   Company[]  @relation("CompanyParent")
+  contacts   Contact[]
+  deals      Deal[]
+  activities Activity[]
+  reminders  Reminder[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -16,10 +16,11 @@ import { Loader2 } from "lucide-react"
 
 interface CompanyFormProps {
   initialData?: CompanyFormData & { id?: string }
-  parentCompanies: { id: string; name: string }[]
+  companies: { id: string; name: string }[]  // Other companies for parent dropdown
+  excludeId?: string  // Exclude self from parent dropdown when editing
 }
 
-export function CompanyForm({ initialData, parentCompanies }: CompanyFormProps) {
+export function CompanyForm({ initialData, companies, excludeId }: CompanyFormProps) {
   const router = useRouter()
   const isEditing = !!initialData?.id
 
@@ -34,7 +35,7 @@ export function CompanyForm({ initialData, parentCompanies }: CompanyFormProps) 
     resolver: zodResolver(companySchema) as any,
     defaultValues: initialData || {
       name: "",
-      parentCompanyId: null,
+      parentId: null,
       industry: "",
       website: "",
       location: "",
@@ -45,6 +46,9 @@ export function CompanyForm({ initialData, parentCompanies }: CompanyFormProps) 
       status: "PROSPECT",
     },
   })
+
+  // Filter out self and children from parent options
+  const parentOptions = companies.filter((c) => c.id !== excludeId)
 
   const onSubmit = async (data: CompanyFormData) => {
     try {
@@ -95,18 +99,18 @@ export function CompanyForm({ initialData, parentCompanies }: CompanyFormProps) 
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="parentCompanyId">Parent Company</Label>
+              <Label htmlFor="parentId">Parent Company</Label>
               <Select
-                value={watch("parentCompanyId") || "none"}
-                onValueChange={(v) => setValue("parentCompanyId", v === "none" ? null : v)}
+                value={watch("parentId") || "none"}
+                onValueChange={(v) => setValue("parentId", v === "none" ? null : v)}
               >
-                <SelectTrigger id="parentCompanyId">
+                <SelectTrigger id="parentId">
                   <SelectValue placeholder="Select parent company..." />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">None</SelectItem>
-                  {parentCompanies.map((pc) => (
-                    <SelectItem key={pc.id} value={pc.id}>{pc.name}</SelectItem>
+                  {parentOptions.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>

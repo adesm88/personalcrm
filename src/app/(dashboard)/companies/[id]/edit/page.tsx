@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation"
-import { getCompany } from "@/actions/companies"
-import { getParentCompanies } from "@/actions/parent-companies"
+import { getCompany, getCompanies } from "@/actions/companies"
 import { CompanyForm } from "@/components/company-form"
 
 export default async function EditCompanyPage({
@@ -9,9 +8,9 @@ export default async function EditCompanyPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const [company, parentCompanies] = await Promise.all([
+  const [company, allCompanies] = await Promise.all([
     getCompany(id),
-    getParentCompanies(),
+    getCompanies(),
   ])
   if (!company) notFound()
 
@@ -21,7 +20,7 @@ export default async function EditCompanyPage({
         initialData={{
           id: company.id,
           name: company.name,
-          parentCompanyId: company.parentCompanyId,
+          parentId: company.parentId,
           industry: company.industry,
           website: company.website,
           location: company.location,
@@ -31,7 +30,8 @@ export default async function EditCompanyPage({
           notes: company.notes,
           status: company.status,
         }}
-        parentCompanies={parentCompanies.map((pc) => ({ id: pc.id, name: pc.name }))}
+        companies={allCompanies.map((c) => ({ id: c.id, name: c.name }))}
+        excludeId={id}
       />
     </div>
   )

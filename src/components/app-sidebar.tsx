@@ -9,7 +9,6 @@ import {
   Handshake,
   Bell,
   Activity,
-  Building,
   ChevronRight,
 } from "lucide-react"
 import {
@@ -45,11 +44,6 @@ const entityNavItems = [
     title: "Companies",
     url: "/companies",
     icon: Building2,
-  },
-  {
-    title: "Parent Companies",
-    url: "/parent-companies",
-    icon: Building,
   },
   {
     title: "Contacts",

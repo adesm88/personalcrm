@@ -1,18 +1,9 @@
-import { z } from "zod"
-
-// --- Parent Company ---
-export const parentCompanySchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  industry: z.string().optional().nullable(),
-  website: z.string().optional().nullable(),
-  notes: z.string().optional().nullable(),
-})
-export type ParentCompanyFormData = z.infer<typeof parentCompanySchema>
+import { z }from "zod"
 
 // --- Company ---
 export const companySchema = z.object({
   name: z.string().min(1, "Company name is required"),
-  parentCompanyId: z.string().optional().nullable(),
+  parentId: z.string().optional().nullable(),
   industry: z.string().optional().nullable(),
   website: z.string().optional().nullable(),
   location: z.string().optional().nullable(),

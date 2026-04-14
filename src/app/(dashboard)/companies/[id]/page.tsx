@@ -12,7 +12,7 @@ import { ReminderList } from "@/components/reminder-list"
 import { ActivityForm } from "@/components/activity-form"
 import { ReminderForm } from "@/components/reminder-form"
 import { DeleteButton } from "@/components/delete-button"
-import { ArrowLeft, Edit, ExternalLink, Users, Handshake, Plus } from "lucide-react"
+import { ArrowLeft, Edit, ExternalLink, Users, Handshake, Plus, Building2 } from "lucide-react"
 
 export default async function CompanyDetailPage({
   params,
@@ -36,12 +36,12 @@ export default async function CompanyDetailPage({
             <StatusBadge status={company.status} label={COMPANY_STATUS_LABELS[company.status]} />
           </div>
           <div className="flex items-center gap-3 text-sm text-muted-foreground mt-0.5">
-            {company.parentCompany && (
-              <Link href={`/parent-companies/${company.parentCompany.id}`} className="text-primary hover:underline">
-                {company.parentCompany.name}
+            {company.parent && (
+              <Link href={`/companies/${company.parent.id}`} className="text-primary hover:underline flex items-center gap-1">
+                <Building2 className="h-3 w-3" /> {company.parent.name}
               </Link>
             )}
-            {company.industry && <span>{company.industry}</span>}
+            {company.industry && <span>{company.parent ? "•" : ""} {company.industry}</span>}
             {company.location && <span>• {company.location}</span>}
           </div>
         </div>
@@ -95,8 +95,13 @@ export default async function CompanyDetailPage({
       )}
 
       {/* Tabs */}
-      <Tabs defaultValue="contacts">
+      <Tabs defaultValue={company.children.length > 0 ? "subsidiaries" : "contacts"}>
         <TabsList>
+          {company.children.length > 0 && (
+            <TabsTrigger value="subsidiaries" className="gap-1.5">
+              <Building2 className="h-3.5 w-3.5" /> Subsidiaries ({company.children.length})
+            </TabsTrigger>
+          )}
           <TabsTrigger value="contacts" className="gap-1.5">
             <Users className="h-3.5 w-3.5" /> Contacts ({company.contacts.length})
           </TabsTrigger>
@@ -106,6 +111,42 @@ export default async function CompanyDetailPage({
           <TabsTrigger value="activities">Activities ({company.activities.length})</TabsTrigger>
           <TabsTrigger value="reminders">Reminders ({company.reminders.length})</TabsTrigger>
         </TabsList>
+
+        {/* Subsidiaries Tab */}
+        {company.children.length > 0 && (
+          <TabsContent value="subsidiaries" className="mt-4">
+            <Card>
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Company</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-center">Contacts</TableHead>
+                      <TableHead className="text-center">Deals</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {company.children.map((child) => (
+                      <TableRow key={child.id}>
+                        <TableCell>
+                          <Link href={`/companies/${child.id}`} className="font-medium text-primary hover:underline">
+                            {child.name}
+                          </Link>
+                        </TableCell>
+                        <TableCell>
+                          <StatusBadge status={child.status} label={COMPANY_STATUS_LABELS[child.status]} />
+                        </TableCell>
+                        <TableCell className="text-center">{child._count.contacts}</TableCell>
+                        <TableCell className="text-center">{child._count.deals}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
 
         <TabsContent value="contacts" className="mt-4">
           <Card>

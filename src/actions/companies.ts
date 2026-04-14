@@ -7,9 +7,9 @@ import { revalidatePath } from "next/cache"
 export async function getCompanies() {
   return await prisma.company.findMany({
     include: {
-      parentCompany: true,
+      parent: { select: { id: true, name: true } },
       _count: {
-        select: { contacts: true, deals: true, activities: true, reminders: true },
+        select: { contacts: true, deals: true, activities: true, reminders: true, children: true },
       },
     },
     orderBy: { updatedAt: "desc" },
@@ -20,7 +20,13 @@ export async function getCompany(id: string) {
   return await prisma.company.findUnique({
     where: { id },
     include: {
-      parentCompany: true,
+      parent: { select: { id: true, name: true } },
+      children: {
+        include: {
+          _count: { select: { contacts: true, deals: true } },
+        },
+        orderBy: { name: "asc" },
+      },
       contacts: {
         orderBy: { lastName: "asc" },
       },
@@ -44,7 +50,7 @@ export async function createCompany(data: unknown) {
   const result = await prisma.company.create({
     data: {
       name: validated.name,
-      parentCompanyId: validated.parentCompanyId || null,
+      parentId: validated.parentId || null,
       industry: validated.industry,
       website: validated.website,
       location: validated.location,
@@ -68,7 +74,7 @@ export async function updateCompany(id: string, data: unknown) {
     where: { id },
     data: {
       name: validated.name,
-      parentCompanyId: validated.parentCompanyId || null,
+      parentId: validated.parentId || null,
       industry: validated.industry,
       website: validated.website,
       location: validated.location,
