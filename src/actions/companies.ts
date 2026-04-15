@@ -9,7 +9,7 @@ export async function getCompanies() {
     include: {
       parent: { select: { id: true, name: true } },
       _count: {
-        select: { contacts: true, deals: true, activities: true, reminders: true, children: true },
+        select: { contacts: true, deals: true, activities: true, children: true },
       },
     },
     orderBy: { updatedAt: "desc" },
@@ -37,8 +37,8 @@ export async function getCompany(id: string) {
         orderBy: { date: "desc" },
         take: 20,
       },
-      reminders: {
-        orderBy: { dueDate: "asc" },
+      entityNotes: {
+        orderBy: { createdAt: "desc" },
       },
     },
   })

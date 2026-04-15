@@ -84,26 +84,27 @@ export const activitySchema = z.object({
     "EMAIL",
     "MEETING",
     "SITE_VISIT",
+    "REMINDER",
     "OTHER",
   ]).default("NOTE"),
   subject: z.string().min(1, "Subject is required"),
   description: z.string().optional().nullable(),
   date: z.coerce.date().default(() => new Date()),
+  // Reminder-specific fields
+  dueDate: z.coerce.date().optional().nullable(),
+  priority: z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"]).optional().nullable(),
+  status: z.enum(["PENDING", "IN_PROGRESS", "COMPLETED", "CANCELLED"]).optional().nullable(),
 })
 export type ActivityFormData = z.infer<typeof activitySchema>
 
-// --- Reminder ---
-export const reminderSchema = z.object({
+// --- Note ---
+export const noteSchema = z.object({
   dealId: z.string().optional().nullable(),
   contactId: z.string().optional().nullable(),
   companyId: z.string().optional().nullable(),
-  title: z.string().min(1, "Title is required"),
-  description: z.string().optional().nullable(),
-  dueDate: z.coerce.date(),
-  priority: z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"]).default("MEDIUM"),
-  status: z.enum(["PENDING", "IN_PROGRESS", "COMPLETED", "CANCELLED"]).default("PENDING"),
+  content: z.string().min(1, "Note content is required"),
 })
-export type ReminderFormData = z.infer<typeof reminderSchema>
+export type NoteFormData = z.infer<typeof noteSchema>
 
 // --- Label Maps for Display ---
 export const COMPANY_STATUS_LABELS: Record<string, string> = {
@@ -151,17 +152,18 @@ export const ACTIVITY_TYPE_LABELS: Record<string, string> = {
   EMAIL: "Email",
   MEETING: "Meeting",
   SITE_VISIT: "Site Visit",
+  REMINDER: "Reminder",
   OTHER: "Other",
 }
 
-export const REMINDER_PRIORITY_LABELS: Record<string, string> = {
+export const ACTIVITY_PRIORITY_LABELS: Record<string, string> = {
   LOW: "Low",
   MEDIUM: "Medium",
   HIGH: "High",
   URGENT: "Urgent",
 }
 
-export const REMINDER_STATUS_LABELS: Record<string, string> = {
+export const ACTIVITY_STATUS_LABELS: Record<string, string> = {
   PENDING: "Pending",
   IN_PROGRESS: "In Progress",
   COMPLETED: "Completed",

@@ -11,7 +11,7 @@ export async function getContacts() {
         select: { id: true, name: true },
       },
       _count: {
-        select: { deals: true, activities: true, reminders: true },
+        select: { deals: true, activities: true },
       },
     },
     orderBy: { lastName: "asc" },
@@ -34,8 +34,8 @@ export async function getContact(id: string) {
         orderBy: { date: "desc" },
         take: 20,
       },
-      reminders: {
-        orderBy: { dueDate: "asc" },
+      entityNotes: {
+        orderBy: { createdAt: "desc" },
       },
     },
   })

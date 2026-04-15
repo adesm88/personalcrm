@@ -7,11 +7,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { StatusBadge } from "@/components/status-badge"
 import { CONTACT_ROLE_LABELS, DEAL_STAGE_LABELS } from "@/lib/schemas"
 import { EntityActivityTimeline } from "@/components/entity-activity-timeline"
-import { ReminderList } from "@/components/reminder-list"
 import { ActivityForm } from "@/components/activity-form"
-import { ReminderForm } from "@/components/reminder-form"
 import { DeleteButton } from "@/components/delete-button"
-import { ArrowLeft, Edit, Mail, Phone, Linkedin, ExternalLink, Handshake, Activity, Bell } from "lucide-react"
+import { NoteForm } from "@/components/note-form"
+import { NoteList } from "@/components/note-list"
+import { ArrowLeft, Edit, Mail, Phone, Linkedin, ExternalLink, Handshake, Activity, StickyNote } from "lucide-react"
 
 export default async function ContactDetailPage({
   params,
@@ -178,21 +178,21 @@ export default async function ContactDetailPage({
         </div>
       </section>
 
-      {/* ── Reminders ── */}
+      {/* ── Notes ── */}
       <section>
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
-          <Bell className="h-4 w-4" /> Reminders ({contact.reminders.length})
+          <StickyNote className="h-4 w-4" /> Notes ({contact.entityNotes.length})
         </h2>
         <div className="space-y-4">
           <Card>
-            <CardHeader><CardTitle className="text-sm">Add Reminder</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-sm">Add Note</CardTitle></CardHeader>
             <CardContent>
-              <ReminderForm contactId={id} />
+              <NoteForm contactId={id} />
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
-              <ReminderList reminders={contact.reminders} showLinkedEntity={false} />
+              <NoteList notes={contact.entityNotes} />
             </CardContent>
           </Card>
         </div>

@@ -8,7 +8,6 @@ import {
   Building2,
   Users,
   Handshake,
-  Bell,
   Activity,
   ChevronRight,
   LogOut,
@@ -56,11 +55,6 @@ const entityNavItems = [
 ]
 
 const trackingNavItems = [
-  {
-    title: "Reminders",
-    url: "/reminders",
-    icon: Bell,
-  },
   {
     title: "Activities",
     url: "/activities",
@@ -184,7 +178,7 @@ export function AppSidebar({ overdueCount = 0 }: AppSidebarProps) {
                     <Link href={item.url}>
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
-                      {item.title === "Reminders" && overdueCount > 0 && (
+                      {item.title === "Activities" && overdueCount > 0 && (
                         <Badge
                           variant="destructive"
                           className="ml-auto h-5 min-w-5 px-1.5 text-[10px] font-bold"

@@ -4,7 +4,7 @@ import { StatCard, StatsGrid } from "@/components/stats-cards"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { StatusBadge } from "@/components/status-badge"
-import { ReminderList } from "@/components/reminder-list"
+import { EntityActivityTimeline } from "@/components/entity-activity-timeline"
 import { DEAL_STAGE_LABELS, DEAL_PRIORITY_LABELS } from "@/lib/schemas"
 import { formatDate, formatCurrency } from "@/lib/utils"
 import { prisma } from "@/lib/prisma"
@@ -25,8 +25,9 @@ async function getDashboardData() {
       prisma.deal.count({
         where: { stage: { notIn: ["CLOSED_WON", "CLOSED_LOST"] } },
       }),
-      prisma.reminder.count({
+      prisma.activity.count({
         where: {
+          type: "REMINDER",
           status: { in: ["PENDING", "IN_PROGRESS"] },
           dueDate: { lt: new Date() },
         },
@@ -38,8 +39,9 @@ async function getDashboardData() {
         orderBy: { updatedAt: "desc" },
         take: 5,
       }),
-      prisma.reminder.findMany({
+      prisma.activity.findMany({
         where: {
+          type: "REMINDER",
           status: { in: ["PENDING", "IN_PROGRESS"] },
         },
         include: {
@@ -174,7 +176,7 @@ export default async function DashboardPage() {
           <CardHeader className="flex flex-row items-center justify-between pb-3">
             <CardTitle className="text-base font-semibold">Upcoming Reminders</CardTitle>
             <Button variant="ghost" size="sm" asChild>
-              <Link href="/reminders" className="text-xs">
+              <Link href="/activities" className="text-xs">
                 View all <ArrowRight className="ml-1 h-3 w-3" />
               </Link>
             </Button>
@@ -186,7 +188,7 @@ export default async function DashboardPage() {
                 <p className="text-sm">No upcoming reminders</p>
               </div>
             ) : (
-              <ReminderList reminders={data.upcomingReminders} />
+              <EntityActivityTimeline activities={data.upcomingReminders} />
             )}
           </CardContent>
         </Card>

@@ -1,5 +1,5 @@
 // Personal CRM — Prisma Schema
-// Tracks contacts, companies, deals, activities, and reminders
+// Tracks contacts, companies, deals, and activities
 // for acquisition/investment workflows
 
 generator client {
@@ -180,7 +180,7 @@ model Company {
   contacts   Contact[]
   deals      Deal[]
   activities Activity[]
-  reminders  Reminder[]
+  entityNotes Note[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -213,7 +213,7 @@ model Contact {
   company    Company?      @relation(fields: [companyId], references: [id], onDelete: SetNull)
   deals      DealContact[]
   activities Activity[]
-  reminders  Reminder[]
+  entityNotes Note[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -255,7 +255,7 @@ model Deal {
   company    Company?      @relation(fields: [companyId], references: [id], onDelete: SetNull)
   contacts   DealContact[]
   activities Activity[]
-  reminders  Reminder[]
+  entityNotes Note[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -275,25 +275,44 @@ model DealContact {
   @@unique([dealId, contactId])
 }
 
-// Activity — notes, calls, meetings, etc. (polymorphic via optional FKs)
+// Activity — notes, calls, meetings, reminders, etc. (polymorphic via optional FKs)
 enum ActivityType {
   NOTE
   CALL
   EMAIL
   MEETING
   SITE_VISIT
+  REMINDER
   OTHER
 }
 
+enum ActivityPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum ActivityStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
 model Activity {
-  id          String       @id @default(cuid())
+  id          String          @id @default(cuid())
   dealId      String?
   contactId   String?
   companyId   String?
-  type        ActivityType @default(NOTE)
+  type        ActivityType    @default(NOTE)
   subject     String
-  description String?      @db.Text
-  date        DateTime     @default(now())
+  description String?         @db.Text
+  date        DateTime        @default(now())
+  // Reminder-specific fields (populated when type = REMINDER)
+  dueDate     DateTime?
+  priority    ActivityPriority?
+  status      ActivityStatus?
 
   deal    Deal?    @relation(fields: [dealId], references: [id], onDelete: Cascade)
   contact Contact? @relation(fields: [contactId], references: [id], onDelete: Cascade)
@@ -303,31 +322,13 @@ model Activity {
   updatedAt DateTime @updatedAt
 }
 
-// Reminder / Next Step — tasks tied to entities
-enum ReminderPriority {
-  LOW
-  MEDIUM
-  HIGH
-  URGENT
-}
-
-enum ReminderStatus {
-  PENDING
-  IN_PROGRESS
-  COMPLETED
-  CANCELLED
-}
-
-model Reminder {
-  id          String           @id @default(cuid())
-  dealId      String?
-  contactId   String?
-  companyId   String?
-  title       String
-  description String?          @db.Text
-  dueDate     DateTime
-  priority    ReminderPriority @default(MEDIUM)
-  status      ReminderStatus   @default(PENDING)
+// Note — timestamped notes attached to entities
+model Note {
+  id        String  @id @default(cuid())
+  dealId    String?
+  contactId String?
+  companyId String?
+  content   String  @db.Text
 
   deal    Deal?    @relation(fields: [dealId], references: [id], onDelete: Cascade)
   contact Contact? @relation(fields: [contactId], references: [id], onDelete: Cascade)

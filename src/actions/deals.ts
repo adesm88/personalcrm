@@ -18,7 +18,7 @@ export async function getDeals() {
         },
       },
       _count: {
-        select: { activities: true, reminders: true },
+        select: { activities: true },
       },
     },
     orderBy: { updatedAt: "desc" },
@@ -39,8 +39,8 @@ export async function getDeal(id: string) {
         orderBy: { date: "desc" },
         take: 30,
       },
-      reminders: {
-        orderBy: { dueDate: "asc" },
+      entityNotes: {
+        orderBy: { createdAt: "desc" },
       },
     },
   })
@@ -53,7 +53,7 @@ export async function getDealsByStage() {
         select: { id: true, name: true },
       },
       _count: {
-        select: { activities: true, reminders: true },
+        select: { activities: true },
       },
     },
     orderBy: { updatedAt: "desc" },

@@ -2,8 +2,8 @@
 
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { activitySchema, type ActivityFormData, ACTIVITY_TYPE_LABELS } from "@/lib/schemas"
-import { createActivity } from "@/actions/activities"
+import { activitySchema, type ActivityFormData, ACTIVITY_TYPE_LABELS, ACTIVITY_PRIORITY_LABELS, ACTIVITY_STATUS_LABELS } from "@/lib/schemas"
+import { createActivity, updateActivity } from "@/actions/activities"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation"
 import { Loader2 } from "lucide-react"
 
 interface ActivityFormProps {
+  initialData?: ActivityFormData & { id?: string }
   dealId?: string
   contactId?: string
   companyId?: string
@@ -24,6 +25,7 @@ interface ActivityFormProps {
 }
 
 export function ActivityForm({
+  initialData,
   dealId,
   contactId,
   companyId,
@@ -33,6 +35,7 @@ export function ActivityForm({
   onSuccess,
 }: ActivityFormProps) {
   const router = useRouter()
+  const isEditing = !!initialData?.id
 
   const {
     register,
@@ -44,7 +47,7 @@ export function ActivityForm({
   } = useForm<ActivityFormData>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(activitySchema) as any,
-    defaultValues: {
+    defaultValues: initialData || {
       dealId: dealId || null,
       contactId: contactId || null,
       companyId: companyId || null,
@@ -52,13 +55,24 @@ export function ActivityForm({
       subject: "",
       description: "",
       date: new Date(),
+      dueDate: null,
+      priority: "MEDIUM",
+      status: "PENDING",
     },
   })
 
+  const selectedType = watch("type")
+  const isReminder = selectedType === "REMINDER"
+
   const onSubmit = async (data: ActivityFormData) => {
     try {
-      await createActivity(data)
-      toast.success("Activity logged")
+      if (isEditing && initialData?.id) {
+        await updateActivity(initialData.id, data)
+        toast.success("Activity updated")
+      } else {
+        await createActivity(data)
+        toast.success(isReminder ? "Reminder created" : "Activity logged")
+      }
       reset()
       if (onSuccess) {
         onSuccess()
@@ -66,7 +80,7 @@ export function ActivityForm({
         router.refresh()
       }
     } catch {
-      toast.error("Failed to log activity")
+      toast.error("Failed to save activity")
     }
   }
 
@@ -79,9 +93,7 @@ export function ActivityForm({
             value={watch("type")}
             onValueChange={(v) => setValue("type", v as ActivityFormData["type"])}
           >
-            <SelectTrigger id="act-type">
-              <SelectValue />
-            </SelectTrigger>
+            <SelectTrigger id="act-type"><SelectValue /></SelectTrigger>
             <SelectContent>
               {Object.entries(ACTIVITY_TYPE_LABELS).map(([key, label]) => (
                 <SelectItem key={key} value={key}>{label}</SelectItem>
@@ -90,18 +102,57 @@ export function ActivityForm({
           </Select>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="act-date">Date</Label>
+          <Label htmlFor="act-date">{isReminder ? "Created Date" : "Date"}</Label>
           <Input id="act-date" type="datetime-local" {...register("date")} />
         </div>
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="act-subject">Subject *</Label>
-        <Input id="act-subject" {...register("subject")} placeholder="Brief summary..." />
+        <Input id="act-subject" {...register("subject")} placeholder={isReminder ? "e.g. Follow up with broker" : "Brief summary..."} />
         {errors.subject && <p className="text-xs text-destructive">{errors.subject.message}</p>}
       </div>
 
-      {/* Show entity selectors only if not pre-set */}
+      {/* Reminder-specific fields */}
+      {isReminder && (
+        <div className="grid gap-4 sm:grid-cols-3">
+          <div className="space-y-2">
+            <Label htmlFor="act-dueDate">Due Date *</Label>
+            <Input id="act-dueDate" type="datetime-local" {...register("dueDate")} />
+            {errors.dueDate && <p className="text-xs text-destructive">{errors.dueDate.message}</p>}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="act-priority">Priority</Label>
+            <Select
+              value={watch("priority") || "MEDIUM"}
+              onValueChange={(v) => setValue("priority", v as ActivityFormData["priority"])}
+            >
+              <SelectTrigger id="act-priority"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {Object.entries(ACTIVITY_PRIORITY_LABELS).map(([key, label]) => (
+                  <SelectItem key={key} value={key}>{label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="act-status">Status</Label>
+            <Select
+              value={watch("status") || "PENDING"}
+              onValueChange={(v) => setValue("status", v as ActivityFormData["status"])}
+            >
+              <SelectTrigger id="act-status"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {Object.entries(ACTIVITY_STATUS_LABELS).map(([key, label]) => (
+                  <SelectItem key={key} value={key}>{label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      )}
+
+      {/* Entity links (only if not pre-set) */}
       {!dealId && !contactId && !companyId && (
         <div className="grid gap-4 sm:grid-cols-3">
           {deals.length > 0 && (
@@ -159,7 +210,7 @@ export function ActivityForm({
 
       <Button type="submit" disabled={isSubmitting} size="sm">
         {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-        Log Activity
+        {isEditing ? "Save Changes" : isReminder ? "Create Reminder" : "Log Activity"}
       </Button>
     </form>
   )

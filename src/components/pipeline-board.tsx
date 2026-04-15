@@ -14,7 +14,7 @@ interface PipelineDeal {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   askingPrice?: any
   company?: { id: string; name: string } | null
-  _count?: { activities: number; reminders: number }
+  _count?: { activities: number }
 }
 
 interface PipelineBoardProps {
