@@ -9,79 +9,75 @@ import { DEAL_STAGE_LABELS, DEAL_PRIORITY_LABELS } from "@/lib/schemas"
 import { formatDate, formatCurrency } from "@/lib/utils"
 import { prisma } from "@/lib/prisma"
 
-async function getDashboardData() {
+async function safe<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
   try {
-    const [
-      companyCount,
-      contactCount,
-      activeDeals,
-      overdueReminders,
-      recentDeals,
-      upcomingReminders,
-      recentActivities,
-    ] = await Promise.all([
-      prisma.company.count(),
-      prisma.contact.count(),
-      prisma.deal.count({
-        where: { stage: { notIn: ["CLOSED_WON", "CLOSED_LOST"] } },
-      }),
-      prisma.activity.count({
-        where: {
-          type: "REMINDER",
-          status: { in: ["PENDING", "IN_PROGRESS"] },
-          dueDate: { lt: new Date() },
-        },
-      }),
-      prisma.deal.findMany({
-        include: {
-          company: { select: { id: true, name: true } },
-        },
-        orderBy: { updatedAt: "desc" },
-        take: 5,
-      }),
-      prisma.activity.findMany({
-        where: {
-          type: "REMINDER",
-          status: { in: ["PENDING", "IN_PROGRESS"] },
-        },
-        include: {
-          deal: { select: { id: true, name: true } },
-          contact: { select: { id: true, firstName: true, lastName: true } },
-          company: { select: { id: true, name: true } },
-        },
-        orderBy: { dueDate: "asc" },
-        take: 8,
-      }),
-      prisma.activity.findMany({
-        include: {
-          deal: { select: { id: true, name: true } },
-          contact: { select: { id: true, firstName: true, lastName: true } },
-          company: { select: { id: true, name: true } },
-        },
-        orderBy: { date: "desc" },
-        take: 8,
-      }),
-    ])
-
-    return {
-      companyCount,
-      contactCount,
-      activeDeals,
-      overdueReminders,
-      recentDeals,
-      upcomingReminders,
-      recentActivities,
-    }
+    return await fn()
   } catch {
-    return {
-      companyCount: 0,
-      contactCount: 0,
-      activeDeals: 0,
-      overdueReminders: 0,
-      recentDeals: [],
-      upcomingReminders: [],
-      recentActivities: [],
-    }
+    return fallback
+  }
+}
+
+async function getDashboardData() {
+  const [
+    companyCount,
+    contactCount,
+    activeDeals,
+    overdueReminders,
+    recentDeals,
+    upcomingReminders,
+    recentActivities,
+  ] = await Promise.all([
+    safe(() => prisma.company.count(), 0),
+    safe(() => prisma.contact.count(), 0),
+    safe(() => prisma.deal.count({
+      where: { stage: { notIn: ["CLOSED_WON", "CLOSED_LOST"] } },
+    }), 0),
+    safe(() => prisma.activity.count({
+      where: {
+        type: "REMINDER",
+        status: { in: ["PENDING", "IN_PROGRESS"] },
+        dueDate: { lt: new Date() },
+      },
+    }), 0),
+    safe(() => prisma.deal.findMany({
+      include: {
+        company: { select: { id: true, name: true } },
+      },
+      orderBy: { updatedAt: "desc" },
+      take: 5,
+    }), []),
+    safe(() => prisma.activity.findMany({
+      where: {
+        type: "REMINDER",
+        status: { in: ["PENDING", "IN_PROGRESS"] },
+      },
+      include: {
+        deal: { select: { id: true, name: true } },
+        contact: { select: { id: true, firstName: true, lastName: true } },
+        company: { select: { id: true, name: true } },
+      },
+      orderBy: { dueDate: "asc" },
+      take: 8,
+    }), []),
+    safe(() => prisma.activity.findMany({
+      include: {
+        deal: { select: { id: true, name: true } },
+        contact: { select: { id: true, firstName: true, lastName: true } },
+        company: { select: { id: true, name: true } },
+      },
+      orderBy: { date: "desc" },
+      take: 8,
+    }), []),
+  ])
+
+  return {
+    companyCount,
+    contactCount,
+    activeDeals,
+    overdueReminders,
+    recentDeals,
+    upcomingReminders,
+    recentActivities,
   }
 }
 
